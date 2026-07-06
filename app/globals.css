@@ -168,6 +168,32 @@ html, body {
   height: 16px;
 }
 
+/* === MODERN SCROLLBAR FOR APPS (descendants only) === */
+.modern-scroll *::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.modern-scroll *::-webkit-scrollbar-track {
+  background: transparent;
+  border: none;
+}
+
+.modern-scroll *::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.35);
+  border-radius: 9999px;
+  border: none;
+}
+
+.modern-scroll *::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.55);
+}
+
+.modern-scroll *::-webkit-scrollbar-button {
+  display: none;
+}
+
+
 /* === ANIMATIONS (minimal, Win2000 was snappy) === */
 @keyframes win2k-fadeIn {
   from {

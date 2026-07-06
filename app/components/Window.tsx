@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useEffect, type ReactNode } from "react";
+import { useCallback, useRef, useEffect, useState, type ReactNode } from "react";
 import type { WindowState } from "@/app/types";
 import { getAppById } from "@/app/config/apps";
 
@@ -12,12 +12,17 @@ interface WindowProps {
   onToggleMaximize: (id: string) => void;
   onBringToFront: (id: string) => void;
   onUpdatePosition: (id: string, position: { x: number; y: number }) => void;
+  onUpdateBounds: (
+    id: string,
+    position: { x: number; y: number },
+    dimensions: { width: number; height: number }
+  ) => void;
   children: ReactNode;
 }
 
 /**
  * Floating window component styled like Windows 2000.
- * Features: drag by title bar, minimize, maximize, close, z-index management.
+ * Features: drag by title bar, resize, minimize, maximize, close, z-index management.
  */
 export default function Window({
   windowState,
@@ -27,14 +32,24 @@ export default function Window({
   onToggleMaximize,
   onBringToFront,
   onUpdatePosition,
+  onUpdateBounds,
   children,
 }: WindowProps) {
+  const [zoom, setZoom] = useState(1.0);
   const dragRef = useRef<{
     isDragging: boolean;
+    isResizing?: boolean;
+    resizeDir?: "e" | "s" | "se" | "w" | "sw";
     startX: number;
     startY: number;
     startPosX: number;
     startPosY: number;
+    startWidth?: number;
+    startHeight?: number;
+    currentX?: number;
+    currentY?: number;
+    currentWidth?: number;
+    currentHeight?: number;
   } | null>(null);
 
   const windowRef = useRef<HTMLDivElement>(null);
@@ -53,28 +68,123 @@ export default function Window({
         startY: e.clientY,
         startPosX: windowState.position.x,
         startPosY: windowState.position.y,
+        currentX: windowState.position.x,
+        currentY: windowState.position.y,
       };
     },
     [windowState.id, windowState.position, windowState.isMaximized, onBringToFront]
   );
 
-  // Global mouse move/up handlers for drag
+  // Handle resize start on edges or corners
+  const handleResizeStart = useCallback(
+    (e: React.MouseEvent, direction: "e" | "s" | "se" | "w" | "sw" | "n" | "ne" | "nw") => {
+      if (windowState.isMaximized) return;
+      e.preventDefault();
+      e.stopPropagation();
+      onBringToFront(windowState.id);
+
+      dragRef.current = {
+        isDragging: false,
+        isResizing: true,
+        resizeDir: direction,
+        startX: e.clientX,
+        startY: e.clientY,
+        startPosX: windowState.position.x,
+        startPosY: windowState.position.y,
+        startWidth: windowState.dimensions.width,
+        startHeight: windowState.dimensions.height,
+        currentX: windowState.position.x,
+        currentY: windowState.position.y,
+        currentWidth: windowState.dimensions.width,
+        currentHeight: windowState.dimensions.height,
+      };
+    },
+    [windowState.id, windowState.position, windowState.dimensions, windowState.isMaximized, onBringToFront]
+  );
+
+  // Global mouse move/up handlers for drag and resize
   useEffect(() => {
     function handleMouseMove(e: MouseEvent) {
-      if (!dragRef.current?.isDragging) return;
+      if (!dragRef.current) return;
+      if (!windowRef.current) return;
 
-      const dx = e.clientX - dragRef.current.startX;
-      const dy = e.clientY - dragRef.current.startY;
+      if (dragRef.current.isDragging) {
+        const dx = e.clientX - dragRef.current.startX;
+        const dy = e.clientY - dragRef.current.startY;
 
-      onUpdatePosition(windowState.id, {
-        x: dragRef.current.startPosX + dx,
-        y: Math.max(0, dragRef.current.startPosY + dy), // prevent dragging above screen
-      });
+        const newX = dragRef.current.startPosX + dx;
+        const newY = Math.max(0, dragRef.current.startPosY + dy); // prevent dragging above screen
+
+        // Direct DOM update (no React re-renders)
+        windowRef.current.style.left = `${newX}px`;
+        windowRef.current.style.top = `${newY}px`;
+
+        dragRef.current.currentX = newX;
+        dragRef.current.currentY = newY;
+      } else if (dragRef.current.isResizing) {
+        const dx = e.clientX - dragRef.current.startX;
+        const dy = e.clientY - dragRef.current.startY;
+
+        const startWidth = dragRef.current.startWidth || 640;
+        const startHeight = dragRef.current.startHeight || 480;
+        const direction = dragRef.current.resizeDir;
+
+        const minWidth = 250;
+        const minHeight = 150;
+
+        let newWidth = startWidth;
+        let newHeight = startHeight;
+        let newX = dragRef.current.startPosX;
+        let newY = dragRef.current.startPosY;
+
+        // Horizontal sizing (E / W)
+        if (direction === "e" || direction === "se" || direction === "ne") {
+          newWidth = Math.max(minWidth, startWidth + dx);
+        } else if (direction === "w" || direction === "sw" || direction === "nw") {
+          const calculatedWidth = startWidth - dx;
+          if (calculatedWidth >= minWidth) {
+            newWidth = calculatedWidth;
+            newX = dragRef.current.startPosX + dx;
+          }
+        }
+
+        // Vertical sizing (S / N)
+        if (direction === "s" || direction === "se" || direction === "sw") {
+          newHeight = Math.max(minHeight, startHeight + dy);
+        } else if (direction === "n" || direction === "ne" || direction === "nw") {
+          const calculatedHeight = startHeight - dy;
+          if (calculatedHeight >= minHeight) {
+            newHeight = calculatedHeight;
+            newY = Math.max(0, dragRef.current.startPosY + dy); // prevent resizing above screen
+          }
+        }
+
+        // Direct DOM update (no React re-renders)
+        windowRef.current.style.left = `${newX}px`;
+        windowRef.current.style.top = `${newY}px`;
+        windowRef.current.style.width = `${newWidth}px`;
+        windowRef.current.style.height = `${newHeight}px`;
+
+        dragRef.current.currentX = newX;
+        dragRef.current.currentY = newY;
+        dragRef.current.currentWidth = newWidth;
+        dragRef.current.currentHeight = newHeight;
+      }
     }
 
     function handleMouseUp() {
       if (dragRef.current) {
-        dragRef.current.isDragging = false;
+        if (dragRef.current.isDragging) {
+          const finalX = dragRef.current.currentX !== undefined ? dragRef.current.currentX : dragRef.current.startPosX;
+          const finalY = dragRef.current.currentY !== undefined ? dragRef.current.currentY : dragRef.current.startPosY;
+          onUpdatePosition(windowState.id, { x: finalX, y: finalY });
+        } else if (dragRef.current.isResizing) {
+          const finalX = dragRef.current.currentX !== undefined ? dragRef.current.currentX : dragRef.current.startPosX;
+          const finalY = dragRef.current.currentY !== undefined ? dragRef.current.currentY : dragRef.current.startPosY;
+          const finalWidth = dragRef.current.currentWidth !== undefined ? dragRef.current.currentWidth : (dragRef.current.startWidth || 640);
+          const finalHeight = dragRef.current.currentHeight !== undefined ? dragRef.current.currentHeight : (dragRef.current.startHeight || 480);
+          onUpdateBounds(windowState.id, { x: finalX, y: finalY }, { width: finalWidth, height: finalHeight });
+        }
         dragRef.current = null;
       }
     }
@@ -86,7 +196,7 @@ export default function Window({
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [windowState.id, onUpdatePosition]);
+  }, [windowState.id, onUpdatePosition, onUpdateBounds]);
 
   // Don't render if minimized
   if (windowState.isMinimized) return null;
@@ -103,10 +213,10 @@ export default function Window({
       ref={windowRef}
       className="absolute animate-win2k-fadeIn"
       style={{
-        left: windowState.position.x,
-        top: windowState.position.y,
-        width: windowState.dimensions.width,
-        height: windowState.dimensions.height,
+        left: `${windowState.position.x}px`,
+        top: `${windowState.position.y}px`,
+        width: `${windowState.dimensions.width}px`,
+        height: `${windowState.dimensions.height}px`,
         zIndex: windowState.zIndex,
       }}
       onMouseDown={() => onBringToFront(windowState.id)}
@@ -190,22 +300,57 @@ export default function Window({
           </div>
         </div>
 
-        {/* ===== MENU BAR (optional faux) ===== */}
+        {/* ===== MENU BAR ===== */}
         <div
-          className="flex items-center h-[20px] px-1 gap-3 shrink-0 text-[11px] select-none"
+          className="flex items-center justify-between h-[20px] px-1 shrink-0 text-[11px] select-none border-b border-gray-400"
           style={{ background: "#C0C0C0" }}
         >
-          <span className="hover:underline cursor-default">File</span>
-          <span className="hover:underline cursor-default">Edit</span>
-          <span className="hover:underline cursor-default">View</span>
-          <span className="hover:underline cursor-default">Help</span>
+          <div className="flex gap-3">
+            <span className="hover:underline cursor-default">File</span>
+            <span className="hover:underline cursor-default">Edit</span>
+            <span className="hover:underline cursor-default">View</span>
+            <span className="hover:underline cursor-default">Help</span>
+          </div>
+
+          {/* Zoom controls */}
+          <div className="flex items-center gap-1.5 mr-1 font-sans">
+            <button
+              onClick={() => setZoom(z => Math.max(0.4, z - 0.1))}
+              className="win2k-button h-[15px] min-h-0 py-0 px-1.5 text-[9px] flex items-center justify-center font-bold"
+              style={{ padding: "0 4px", minHeight: "15px" }}
+              title="Zoom Out"
+            >
+              🔍-
+            </button>
+            <span 
+              onClick={() => setZoom(1.0)}
+              className="px-1 text-[9px] font-mono hover:bg-black/10 cursor-pointer min-w-[32px] text-center"
+              title="Reset Zoom"
+            >
+              {Math.round(zoom * 100)}%
+            </span>
+            <button
+              onClick={() => setZoom(z => Math.min(1.6, z + 0.1))}
+              className="win2k-button h-[15px] min-h-0 py-0 px-1.5 text-[9px] flex items-center justify-center font-bold"
+              style={{ padding: "0 4px", minHeight: "15px" }}
+              title="Zoom In"
+            >
+              🔍+
+            </button>
+          </div>
         </div>
 
         {/* ===== CONTENT AREA ===== */}
-        <div className="flex-1 mx-[2px] mb-[2px] win2k-sunken overflow-auto">
+        <div className="flex-1 mx-[2px] mb-[2px] win2k-sunken overflow-hidden relative">
           <div
-            className="h-full overflow-auto"
-            style={{ background: "#FFFFFF" }}
+            className="overflow-auto modern-scroll"
+            style={{
+              background: "#FFFFFF",
+              width: `${100 / zoom}%`,
+              height: `${100 / zoom}%`,
+              transform: `scale(${zoom})`,
+              transformOrigin: "top left",
+            }}
           >
             {children}
           </div>
@@ -213,7 +358,7 @@ export default function Window({
 
         {/* ===== STATUS BAR ===== */}
         <div
-          className="flex items-center h-[18px] px-1 shrink-0"
+          className="flex items-center h-[18px] px-1 shrink-0 relative"
           style={{ background: "#C0C0C0" }}
         >
           <div className="win2k-sunken-thin flex-1 h-[14px] px-1 flex items-center">
@@ -221,13 +366,75 @@ export default function Window({
               {app?.description ?? "Ready"}
             </span>
           </div>
-          <div className="win2k-sunken-thin h-[14px] px-2 ml-1 flex items-center">
+          <div className="win2k-sunken-thin h-[14px] px-2 ml-1 flex items-center mr-[14px]">
             <span className="text-[10px] text-[#000000]">
               {app?.status === "completed" ? "✅" : "🚧"}
             </span>
           </div>
+
+          {/* Classic Win2000 Diagonal Resize Grip */}
+          {!windowState.isMaximized && (
+            <div
+              className="absolute right-0 bottom-0 w-[14px] h-[14px] cursor-nwse-resize flex items-end justify-end p-[1px] select-none z-50"
+              onMouseDown={(e) => handleResizeStart(e, "se")}
+            >
+              <svg width="10" height="10" viewBox="0 0 10 10" className="opacity-70">
+                <path d="M6 0 Q10 0 10 0 M3 3 L7 3 M0 6 L4 6 M7 7 L10 7 M4 10 L7 10" stroke="#808080" strokeWidth="1" />
+                <path d="M7 1 L10 1 M4 4 L7 4 M1 7 L4 7 M8 8 L10 8 M5 10 L8 10" stroke="#FFFFFF" strokeWidth="1" />
+              </svg>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Invisible Edge Resize Overlays */}
+      {!windowState.isMaximized && (
+        <>
+          {/* Edges */}
+          {/* Top Edge */}
+          <div
+            className="absolute left-0 -top-[4px] w-full h-[8px] cursor-ns-resize z-[9999]"
+            onMouseDown={(e) => handleResizeStart(e, "n")}
+          />
+          {/* Bottom Edge */}
+          <div
+            className="absolute left-0 -bottom-[4px] w-full h-[8px] cursor-ns-resize z-[9999]"
+            onMouseDown={(e) => handleResizeStart(e, "s")}
+          />
+          {/* Left Edge */}
+          <div
+            className="absolute -left-[4px] top-0 w-[8px] h-full cursor-ew-resize z-[9999]"
+            onMouseDown={(e) => handleResizeStart(e, "w")}
+          />
+          {/* Right Edge */}
+          <div
+            className="absolute -right-[4px] top-0 w-[8px] h-full cursor-ew-resize z-[9999]"
+            onMouseDown={(e) => handleResizeStart(e, "e")}
+          />
+
+          {/* Corners */}
+          {/* Top Left Corner */}
+          <div
+            className="absolute -left-[4px] -top-[4px] w-[12px] h-[12px] cursor-nwse-resize z-[10000]"
+            onMouseDown={(e) => handleResizeStart(e, "nw")}
+          />
+          {/* Top Right Corner */}
+          <div
+            className="absolute -right-[4px] -top-[4px] w-[12px] h-[12px] cursor-nesw-resize z-[10000]"
+            onMouseDown={(e) => handleResizeStart(e, "ne")}
+          />
+          {/* Bottom Left Corner */}
+          <div
+            className="absolute -left-[4px] -bottom-[4px] w-[12px] h-[12px] cursor-nesw-resize z-[10000]"
+            onMouseDown={(e) => handleResizeStart(e, "sw")}
+          />
+          {/* Bottom Right Corner */}
+          <div
+            className="absolute -right-[4px] -bottom-[4px] w-[12px] h-[12px] cursor-nwse-resize z-[10000]"
+            onMouseDown={(e) => handleResizeStart(e, "se")}
+          />
+        </>
+      )}
     </div>
   );
 }

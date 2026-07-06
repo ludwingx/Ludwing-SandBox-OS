@@ -5,7 +5,9 @@ import type { AppDefinition } from "@/app/types";
 
 interface DesktopIconProps {
   app: AppDefinition;
+  position: { x: number; y: number };
   onDoubleClick: (appId: string) => void;
+  onMouseDown: (e: React.MouseEvent, appId: string) => void;
 }
 
 /**
@@ -13,7 +15,12 @@ interface DesktopIconProps {
  * Shows app icon + name label with classic text shadow.
  * Double-click opens the app window.
  */
-export default function DesktopIcon({ app, onDoubleClick }: DesktopIconProps) {
+export default function DesktopIcon({
+  app,
+  position,
+  onDoubleClick,
+  onMouseDown,
+}: DesktopIconProps) {
   const [isSelected, setIsSelected] = useState(false);
 
   const handleDoubleClick = useCallback(() => {
@@ -28,14 +35,29 @@ export default function DesktopIcon({ app, onDoubleClick }: DesktopIconProps) {
     []
   );
 
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      // Trigger select
+      setIsSelected(true);
+      // Notify parent for dragging
+      onMouseDown(e, app.id);
+    },
+    [app.id, onMouseDown]
+  );
+
   const IconComponent = app.icon;
 
   return (
     <div
-      className={`flex flex-col items-center justify-start gap-1 p-1 cursor-pointer w-[76px] ${
+      className={`absolute flex flex-col items-center justify-start gap-1 p-1 cursor-pointer w-[76px] ${
         isSelected ? "win2k-icon-selected" : ""
       }`}
+      style={{
+        left: position.x,
+        top: position.y,
+      }}
       onClick={handleClick}
+      onMouseDown={handleMouseDown}
       onDoubleClick={handleDoubleClick}
       onBlur={() => setIsSelected(false)}
       tabIndex={0}

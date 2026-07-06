@@ -63,6 +63,7 @@ export interface WindowManagerActions {
   toggleMaximize: (windowId: string) => void;
   bringToFront: (windowId: string) => void;
   updatePosition: (windowId: string, position: WindowPosition) => void;
+  updateWindowBounds: (windowId: string, position: WindowPosition, dimensions: WindowDimensions) => void;
 }
 
 /** Complete window manager state + actions */

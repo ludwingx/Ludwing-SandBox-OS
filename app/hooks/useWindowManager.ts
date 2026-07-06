@@ -167,6 +167,16 @@ export function useWindowManager(): WindowManager {
     []
   );
 
+  /** Update window position and dimensions (during resize) */
+  const updateWindowBounds = useCallback(
+    (windowId: string, position: WindowPosition, dimensions: { width: number; height: number }) => {
+      setWindows((prev) =>
+        prev.map((w) => (w.id === windowId ? { ...w, position, dimensions } : w))
+      );
+    },
+    []
+  );
+
   return {
     windows,
     activeWindowId,
@@ -177,5 +187,6 @@ export function useWindowManager(): WindowManager {
     toggleMaximize,
     bringToFront,
     updatePosition,
+    updateWindowBounds,
   };
 }
