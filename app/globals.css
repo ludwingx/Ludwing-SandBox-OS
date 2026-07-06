@@ -1,26 +1,271 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* ============================================
+   LUDWING SANDBOX OS — WINDOWS 2000 DESIGN SYSTEM
+   ============================================ */
 
+/* === TAILWIND v4 THEME TOKENS === */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Windows 2000 Color Palette */
+  --color-win2k-desktop: #3A6EA5;
+  --color-win2k-desktop-dark: #1F4E79;
+  --color-win2k-titlebar-active-start: #0A246A;
+  --color-win2k-titlebar-active-end: #A6CAF0;
+  --color-win2k-titlebar-inactive: #808080;
+  --color-win2k-titlebar-inactive-end: #B4B4B4;
+  --color-win2k-window-bg: #C0C0C0;
+  --color-win2k-window-face: #ECE9D8;
+  --color-win2k-border-light: #FFFFFF;
+  --color-win2k-border-mid: #C0C0C0;
+  --color-win2k-border-dark: #808080;
+  --color-win2k-border-darker: #404040;
+  --color-win2k-text: #000000;
+  --color-win2k-text-white: #FFFFFF;
+  --color-win2k-text-disabled: #808080;
+  --color-win2k-button-face: #C0C0C0;
+  --color-win2k-highlight: #0A246A;
+  --color-win2k-highlight-text: #FFFFFF;
+  --color-win2k-start-green: #008000;
+  --color-win2k-scrollbar: #C0C0C0;
+  --color-win2k-menu-bg: #FFFFFF;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+:root {
+  --background: #3A6EA5;
+  --foreground: #000000;
+}
+
+/* === GLOBAL RESET FOR WIN2K AESTHETIC === */
+* {
+  border-radius: 0 !important;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  height: 100%;
+  width: 100%;
+  font-family: "Tahoma", "MS Sans Serif", "Segoe UI", Arial, sans-serif;
+  font-size: 11px;
+  line-height: 1.3;
+  -webkit-font-smoothing: auto;
+  -moz-osx-font-smoothing: auto;
+  cursor: default;
+  user-select: none;
+}
+
+/* === WIN2K 3D BORDER UTILITIES === */
+.win2k-raised {
+  border: 2px solid;
+  border-color: #FFFFFF #404040 #404040 #FFFFFF;
+}
+
+.win2k-raised-thin {
+  border: 1px solid;
+  border-color: #FFFFFF #404040 #404040 #FFFFFF;
+}
+
+.win2k-sunken {
+  border: 2px solid;
+  border-color: #808080 #FFFFFF #FFFFFF #808080;
+}
+
+.win2k-sunken-thin {
+  border: 1px solid;
+  border-color: #808080 #FFFFFF #FFFFFF #808080;
+}
+
+.win2k-groove {
+  border: 2px solid;
+  border-color: #808080 #FFFFFF #FFFFFF #808080;
+  box-shadow: inset 1px 1px 0 #FFFFFF, 1px 1px 0 #808080;
+}
+
+/* === WIN2K BUTTON === */
+.win2k-button {
+  background-color: #C0C0C0;
+  border: 2px solid;
+  border-color: #FFFFFF #404040 #404040 #FFFFFF;
+  padding: 1px 6px;
+  font-family: "Tahoma", "MS Sans Serif", Arial, sans-serif;
+  font-size: 11px;
+  cursor: pointer;
+  min-height: 21px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.win2k-button:active {
+  border-color: #404040 #FFFFFF #FFFFFF #404040;
+  padding: 2px 5px 0px 7px;
+}
+
+.win2k-button:focus-visible {
+  outline: 1px dotted #000000;
+  outline-offset: -4px;
+}
+
+.win2k-button-pressed {
+  background-color: #C0C0C0;
+  border: 2px solid;
+  border-color: #404040 #FFFFFF #FFFFFF #404040;
+  padding: 2px 5px 0px 7px;
+}
+
+/* === WIN2K TITLE BAR BUTTON (MINIMIZE/MAXIMIZE/CLOSE) === */
+.win2k-title-button {
+  width: 16px;
+  height: 14px;
+  background-color: #C0C0C0;
+  border: 2px solid;
+  border-color: #FFFFFF #404040 #404040 #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  font-size: 8px;
+  line-height: 1;
+}
+
+.win2k-title-button:active {
+  border-color: #404040 #FFFFFF #FFFFFF #404040;
+}
+
+/* === WIN2K SCROLLBAR === */
+::-webkit-scrollbar {
+  width: 16px;
+  height: 16px;
+}
+
+::-webkit-scrollbar-track {
+  background: #C0C0C0;
+  border: 1px solid #808080;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #C0C0C0;
+  border: 2px solid;
+  border-color: #FFFFFF #404040 #404040 #FFFFFF;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #D0D0D0;
+}
+
+::-webkit-scrollbar-button {
+  background: #C0C0C0;
+  border: 2px solid;
+  border-color: #FFFFFF #404040 #404040 #FFFFFF;
+  width: 16px;
+  height: 16px;
+}
+
+/* === ANIMATIONS (minimal, Win2000 was snappy) === */
+@keyframes win2k-fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@keyframes win2k-slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-win2k-fadeIn {
+  animation: win2k-fadeIn 0.15s ease-out;
+}
+
+.animate-win2k-slideUp {
+  animation: win2k-slideUp 0.2s ease-out;
+}
+
+/* === DESKTOP ICON TEXT SHADOW (classic Win2K icon labels) === */
+.win2k-icon-text {
+  color: #FFFFFF;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9);
+  font-size: 11px;
+  text-align: center;
+  max-width: 72px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* === WIN2K ICON SELECTION === */
+.win2k-icon-selected {
+  background-color: #0A246A;
+  color: #FFFFFF;
+}
+
+.win2k-icon-selected .win2k-icon-text {
+  background-color: #0A246A;
+  text-shadow: none;
+}
+
+/* === WIN2K START MENU ITEM HOVER === */
+.win2k-menu-item {
+  padding: 4px 24px 4px 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 11px;
+  color: #000000;
+  white-space: nowrap;
+}
+
+.win2k-menu-item:hover {
+  background-color: #0A246A;
+  color: #FFFFFF;
+}
+
+/* === WIN2K SEPARATOR === */
+.win2k-separator {
+  height: 2px;
+  margin: 4px 2px;
+  border-top: 1px solid #808080;
+  border-bottom: 1px solid #FFFFFF;
+}
+
+/* === TASKBAR APP BUTTON === */
+.win2k-taskbar-button {
+  background-color: #C0C0C0;
+  border: 2px solid;
+  border-color: #FFFFFF #404040 #404040 #FFFFFF;
+  padding: 2px 8px;
+  font-family: "Tahoma", "MS Sans Serif", Arial, sans-serif;
+  font-size: 11px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 160px;
+  min-width: 80px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  height: 22px;
+}
+
+.win2k-taskbar-button-active {
+  border-color: #404040 #FFFFFF #FFFFFF #404040;
+  background-color: #B8B8B8;
+  font-weight: bold;
 }
