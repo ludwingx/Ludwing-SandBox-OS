@@ -14,6 +14,7 @@ import MarketGSApp from "./apps/MarketGSApp";
 import MaryJaneApp from "./apps/MaryJaneApp";
 import PhronAgentsApp from "./apps/PhronAgentsApp";
 import AstroboyXLApp from "./apps/AstroboyXLApp";
+import ScentDuoApp from "./apps/ScentDuoApp";
 
 /** Map of appId → React component */
 const APP_COMPONENTS: Record<string, React.ComponentType> = {
@@ -22,6 +23,7 @@ const APP_COMPONENTS: Record<string, React.ComponentType> = {
   maryjaneai: MaryJaneApp,
   phronagents: PhronAgentsApp,
   astroboyxl: AstroboyXLApp,
+  scentduo: ScentDuoApp,
 };
 
 /**

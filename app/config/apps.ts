@@ -4,6 +4,7 @@ import {
   Brain,
   Bot,
   Ticket,
+  Sparkles,
 } from "lucide-react";
 import type { AppDefinition } from "@/app/types";
 
@@ -47,6 +48,14 @@ export const APP_REGISTRY: AppDefinition[] = [
     description: "Listening Party Tickets",
     icon: Ticket,
     accentColor: "#ea2812",
+    status: "completed",
+  },
+  {
+    id: "scentduo",
+    name: "ScentDuo",
+    description: "Boutique de Perfumes y Decants",
+    icon: Sparkles,
+    accentColor: "#D4AF37",
     status: "completed",
   },
 ];
