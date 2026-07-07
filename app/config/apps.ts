@@ -3,6 +3,7 @@ import {
   ShoppingCart,
   Brain,
   Bot,
+  Ticket,
 } from "lucide-react";
 import type { AppDefinition } from "@/app/types";
 
@@ -38,6 +39,14 @@ export const APP_REGISTRY: AppDefinition[] = [
     description: "Hub de Agentes Conversacionales",
     icon: Bot,
     accentColor: "#2196F3",
+    status: "completed",
+  },
+  {
+    id: "astroboyxl",
+    name: "Astroboy XL",
+    description: "Listening Party Tickets",
+    icon: Ticket,
+    accentColor: "#ea2812",
     status: "completed",
   },
 ];
